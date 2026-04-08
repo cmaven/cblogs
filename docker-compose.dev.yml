@@ -1,0 +1,32 @@
+services:
+  docs-portal:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "3030:3030"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    environment:
+      - WATCHPACK_POLLING=true
+      - CHOKIDAR_USEPOLLING=true
+    command: sh -c "
+      if [ ! -f /app/node_modules/.package-lock.json ]; then
+        echo '📦 node_modules 없음 — npm install 실행...' &&
+        npm install --legacy-peer-deps;
+      else
+        echo '✅ node_modules 캐시 사용 — install 스킵';
+      fi &&
+      npm run dev &
+      SERVER_PID=$$! &&
+      echo '⏳ 서버 시작 대기...' &&
+      sleep 10 &&
+      echo '🔥 페이지 워밍업 시작...' &&
+      wget -q -O /dev/null http://localhost:3030/ 2>/dev/null;
+      wget -q -O /dev/null http://localhost:3030/docs 2>/dev/null;
+      echo '✅ 워밍업 완료' &&
+      wait"
+    restart: unless-stopped
+
+volumes:
+  node_modules:

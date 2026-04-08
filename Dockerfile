@@ -3,13 +3,14 @@ FROM node:20-alpine AS base
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci --legacy-peer-deps --ignore-scripts
 
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+ENV DOCKER_BUILD=1
+RUN npx fumadocs-mdx && npm run build
 
 FROM base AS runner
 WORKDIR /app

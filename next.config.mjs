@@ -12,7 +12,7 @@ const isExport = process.env.NEXT_OUTPUT === 'export';
 const config = {
   reactStrictMode: true,
   devIndicators: false,
-  ...(isExport ? { output: 'export' } : {}),
+  ...(isExport ? { output: 'export' } : process.env.DOCKER_BUILD ? { output: 'standalone' } : {}),
   allowedDevOrigins: [
     'localhost',
     '127.0.0.1',

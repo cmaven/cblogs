@@ -1,14 +1,6 @@
 services:
   docs-portal:
-    image: node:20-alpine
-    working_dir: /app
+    build: .
     ports:
       - "3030:3030"
-    volumes:
-      - .:/app
-      - node_modules:/app/node_modules
-    command: sh -c "npm install --legacy-peer-deps && npm run dev"
     restart: unless-stopped
-
-volumes:
-  node_modules:
