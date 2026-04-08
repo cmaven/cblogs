@@ -1,6 +1,0 @@
-{
-  "title": "Guide",
-  "root": true,
-  "defaultOpen": true,
-  "pages": ["index", "mdx-writing", "components", "customization", "docs-management"]
-}

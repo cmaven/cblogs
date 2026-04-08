@@ -1,6 +1,0 @@
-{
-  "title": "2026",
-  "root": true,
-  "defaultOpen": true,
-  "pages": ["project-gamma", "openstack-helm"]
-}

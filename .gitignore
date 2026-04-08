@@ -3,6 +3,8 @@ node_modules/
 .source/
 out/
 dist/
+docs/.vitepress/dist
+docs/.vitepress/cache
 .env
 .env.local
 .env.*.local

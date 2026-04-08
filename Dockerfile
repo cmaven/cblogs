@@ -1,27 +1,23 @@
-FROM node:20-alpine AS base
+# ============================================================
+# Dockerfile: VitePress 프로덕션 멀티스테이지 빌드 (nginx 서빙)
+# 생성일: 2026-04-08 | 수정일: 2026-04-08
+# ============================================================
 
-FROM base AS deps
+# ── Stage 1: 빌드 ──────────────────────────────────────────
+FROM node:20-alpine AS builder
 WORKDIR /app
+
 COPY package.json package-lock.json* ./
-RUN npm ci --legacy-peer-deps --ignore-scripts
+RUN npm ci
 
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV DOCKER_BUILD=1
-RUN npx fumadocs-mdx && npm run build
+RUN npm run docs:build
 
-FROM base AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-USER nextjs
+# ── Stage 2: 서빙 ──────────────────────────────────────────
+FROM nginx:alpine AS runner
+
+COPY --from=builder /app/docs/.vitepress/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 3030
-ENV PORT=3030
-ENV HOSTNAME="0.0.0.0"
-CMD ["node", "server.js"]
+CMD ["nginx", "-g", "daemon off;"]
