@@ -1,8 +1,196 @@
 /**
- * config.ts: VitePress 사이트 설정 - 네비게이션, 사이드바, 버전 전환 포함
- * 생성일: 2026-04-08 | 수정일: 2026-04-08
+ * config.ts: VitePress 사이트 설정 - 자동 사이드바 생성 포함
+ * 상세: docs/ 하위에 .md 파일을 배치하면 사이드바에 자동 등록
+ * 생성일: 2026-04-08 | 수정일: 2026-04-09
  */
 import { defineConfig } from 'vitepress'
+import fs from 'node:fs'
+import path from 'node:path'
+import matter from 'gray-matter'
+
+const docsRoot = path.resolve(__dirname, '..')
+
+/**
+ * .md 파일에서 frontmatter title을 읽거나, 파일명을 포맷하여 반환
+ */
+function getTitle(filePath: string, fileName: string): string {
+  try {
+    const content = fs.readFileSync(filePath, 'utf-8')
+    const { data } = matter(content)
+    if (data.title) return data.title
+  } catch {}
+  if (fileName === 'index') return '개요'
+  return fileName
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+}
+
+/**
+ * 디렉토리 내 .md 파일을 스캔하여 사이드바 아이템 배열 생성
+ * index.md는 "개요"로 맨 앞에 배치
+ */
+function scanDirectory(dirPath: string, urlPrefix: string): { text: string; link: string }[] {
+  if (!fs.existsSync(dirPath)) return []
+
+  const files = fs.readdirSync(dirPath)
+    .filter(f => f.endsWith('.md') && !f.startsWith('.'))
+    .sort()
+
+  const items: { text: string; link: string }[] = []
+
+  // index.md를 먼저 처리
+  if (files.includes('index.md')) {
+    const title = getTitle(path.join(dirPath, 'index.md'), 'index')
+    items.push({ text: title, link: `${urlPrefix}` })
+  }
+
+  // 나머지 파일
+  for (const file of files) {
+    if (file === 'index.md') continue
+    const name = file.replace('.md', '')
+    const title = getTitle(path.join(dirPath, file), name)
+    items.push({ text: title, link: `${urlPrefix}${name}` })
+  }
+
+  return items
+}
+
+/**
+ * 연도 디렉토리(2020~2026) 내 프로젝트를 자동 스캔하여 사이드바 생성
+ */
+function generateSidebar(): Record<string, any[]> {
+  const sidebar: Record<string, any[]> = {}
+  const entries = fs.readdirSync(docsRoot).filter(entry => {
+    const fullPath = path.join(docsRoot, entry)
+    return fs.statSync(fullPath).isDirectory() && !entry.startsWith('.')
+  })
+
+  for (const entry of entries) {
+    const entryPath = path.join(docsRoot, entry)
+
+    // guide/ 디렉토리는 특별 처리
+    if (entry === 'guide') {
+      const items = scanDirectory(entryPath, '/guide/')
+      if (items.length > 0) {
+        sidebar['/guide/'] = [{ text: '가이드', items }]
+      }
+      continue
+    }
+
+    // public/, .vitepress 등은 건너뛰기
+    if (entry === 'public' || entry === '.vitepress') continue
+
+    // 연도 디렉토리 (2020, 2021, ...) 처리
+    const isYear = /^\d{4}$/.test(entry)
+    if (!isYear) continue
+
+    const yearPath = entryPath
+    const projects = fs.readdirSync(yearPath).filter(p => {
+      return fs.statSync(path.join(yearPath, p)).isDirectory() && !p.startsWith('.')
+    }).sort()
+
+    // 프로젝트가 적으면 연도 단위로 묶음, 많으면 개별 경로
+    // 항상 연도 묶음 사이드바 (모든 프로젝트를 함께 표시)
+    const yearItems: any[] = []
+    for (const proj of projects) {
+      const projPath = path.join(yearPath, proj)
+      const urlPrefix = `/${entry}/${proj}/`
+      const items = scanDirectory(projPath, urlPrefix)
+      if (items.length > 0) {
+        yearItems.push({ text: formatName(proj), items, collapsed: true })
+      }
+    }
+    if (yearItems.length > 0) {
+      sidebar[`/${entry}/`] = [{ text: entry, items: yearItems }]
+    }
+  }
+
+  return sidebar
+}
+
+/**
+ * 디렉토리명을 사람이 읽기 좋은 형태로 변환
+ * project-alpha → Project Alpha
+ */
+function formatName(name: string): string {
+  return name
+    .split('-')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+
+/**
+ * 연도별 카테고리 목록 자동 생성 (CategoryDropdown용)
+ * 각 연도의 첫 번째 프로젝트 첫 번째 페이지로 링크
+ */
+function generateCategories(): { label: string; path: string }[] {
+  const categories: { label: string; path: string }[] = []
+  const entries = fs.readdirSync(docsRoot)
+    .filter(e => /^\d{4}$/.test(e) && fs.statSync(path.join(docsRoot, e)).isDirectory())
+    .sort()
+    .reverse()
+
+  for (const year of entries) {
+    const yearPath = path.join(docsRoot, year)
+    const projects = fs.readdirSync(yearPath)
+      .filter(p => fs.statSync(path.join(yearPath, p)).isDirectory() && !p.startsWith('.'))
+      .sort()
+    if (projects.length === 0) continue
+
+    // 첫 번째 프로젝트의 첫 번째 페이지
+    const firstProj = projects[0]
+    const projPath = path.join(yearPath, firstProj)
+    const files = fs.readdirSync(projPath).filter(f => f.endsWith('.md')).sort()
+    const firstFile = files.includes('index.md') ? '' : files[0]?.replace('.md', '') || ''
+    categories.push({ label: year, path: `/${year}/${firstProj}/${firstFile}` })
+  }
+
+  categories.push({ label: 'Guide', path: '/guide/' })
+  return categories
+}
+
+/**
+ * 랜딩 페이지 프로젝트 카드 자동 생성 (HomePage용)
+ */
+function generateHomeProjects(): { year: string; items: { name: string; desc: string; href: string }[] }[] {
+  const result: { year: string; items: { name: string; desc: string; href: string }[] }[] = []
+  const years = fs.readdirSync(docsRoot)
+    .filter(e => /^\d{4}$/.test(e) && fs.statSync(path.join(docsRoot, e)).isDirectory())
+    .sort()
+    .reverse()
+
+  for (const year of years) {
+    const yearPath = path.join(docsRoot, year)
+    const projects = fs.readdirSync(yearPath)
+      .filter(p => fs.statSync(path.join(yearPath, p)).isDirectory() && !p.startsWith('.'))
+      .sort()
+
+    const items: { name: string; desc: string; href: string }[] = []
+    for (const proj of projects) {
+      const projPath = path.join(yearPath, proj)
+      const files = fs.readdirSync(projPath).filter(f => f.endsWith('.md')).sort()
+      const firstFile = files.includes('index.md') ? '' : files[0]?.replace('.md', '') || ''
+      const indexPath = path.join(projPath, 'index.md')
+      let name = formatName(proj)
+      let desc = ''
+      if (fs.existsSync(indexPath)) {
+        try {
+          const { data } = matter(fs.readFileSync(indexPath, 'utf-8'))
+          if (data.title) name = data.title
+          if (data.description) desc = data.description
+        } catch {}
+      }
+      items.push({ name, desc, href: `/${year}/${proj}/${firstFile}` })
+    }
+    if (items.length > 0) result.push({ year, items })
+  }
+  return result
+}
+
+// 사이드바 + 카테고리 + 홈 프로젝트 자동 생성
+const sidebar = generateSidebar()
+const categories = generateCategories()
+const homeProjects = generateHomeProjects()
 
 export default defineConfig({
   title: 'Tech Docs Portal',
@@ -16,228 +204,9 @@ export default defineConfig({
 
   themeConfig: {
     nav: [],
-
-    sidebar: {
-      // ── 2026 ──────────────────────────────────────────────
-      '/2026/openstack-helm/': [
-        {
-          text: 'OpenStack Helm',
-          items: [
-            { text: 'Quick Guide', link: '/2026/openstack-helm/openstack-helm_quick_guide' },
-            { text: 'Full Guide', link: '/2026/openstack-helm/openstack-helm_full_guide' },
-            { text: '기타', link: '/2026/openstack-helm/openstack-helm_etc' },
-          ],
-        },
-      ],
-      '/2026/project-gamma/': [
-        {
-          text: 'Project Gamma (2026)',
-          items: [
-            { text: '개요', link: '/2026/project-gamma/' },
-            { text: '아키텍처', link: '/2026/project-gamma/architecture' },
-            { text: '트러블슈팅', link: '/2026/project-gamma/troubleshooting' },
-          ],
-        },
-      ],
-
-      // ── 2025 ──────────────────────────────────────────────
-      '/2025/project-alpha/': [
-        {
-          text: 'Project Alpha v1',
-          items: [
-            { text: '개요', link: '/2025/project-alpha/' },
-            { text: 'API 가이드', link: '/2025/project-alpha/api-guide' },
-            { text: '아키텍처', link: '/2025/project-alpha/architecture' },
-          ],
-        },
-      ],
-      '/2025/project-alpha-v2/': [
-        {
-          text: 'Project Alpha v2',
-          items: [
-            { text: '개요', link: '/2025/project-alpha-v2/' },
-            { text: 'API 가이드', link: '/2025/project-alpha-v2/api-guide' },
-            { text: '아키텍처', link: '/2025/project-alpha-v2/architecture' },
-            { text: 'GUI 가이드', link: '/2025/project-alpha-v2/gui-guide' },
-            { text: '변경 이력', link: '/2025/project-alpha-v2/changelog' },
-          ],
-        },
-      ],
-      '/2025/project-beta/': [
-        {
-          text: 'Project Beta (2025)',
-          items: [
-            { text: '개요', link: '/2025/project-beta/' },
-            { text: '설치', link: '/2025/project-beta/setup' },
-          ],
-        },
-      ],
-      '/2025/project-delta/': [
-        {
-          text: 'Project Delta (2025)',
-          items: [
-            { text: '개요', link: '/2025/project-delta/' },
-          ],
-        },
-      ],
-
-      // ── 2024 ──────────────────────────────────────────────
-      '/2024/': [
-        {
-          text: '2024',
-          items: [
-            {
-              text: 'Project Alpha',
-              items: [
-                { text: '개요', link: '/2024/project-alpha/' },
-                { text: '아키텍처', link: '/2024/project-alpha/architecture' },
-                { text: '설치', link: '/2024/project-alpha/setup' },
-              ],
-            },
-            {
-              text: 'Project Beta',
-              items: [
-                { text: '개요', link: '/2024/project-beta/' },
-                { text: '아키텍처', link: '/2024/project-beta/architecture' },
-                { text: '설치', link: '/2024/project-beta/setup' },
-              ],
-            },
-            {
-              text: 'Project Gamma',
-              items: [
-                { text: '개요', link: '/2024/project-gamma/' },
-              ],
-            },
-          ],
-        },
-      ],
-
-      // ── 2023 ──────────────────────────────────────────────
-      '/2023/': [
-        {
-          text: '2023',
-          items: [
-            {
-              text: 'Project Alpha',
-              items: [
-                { text: '개요', link: '/2023/project-alpha/' },
-                { text: '아키텍처', link: '/2023/project-alpha/architecture' },
-                { text: '설치', link: '/2023/project-alpha/setup' },
-              ],
-            },
-            {
-              text: 'Project Beta',
-              items: [
-                { text: '개요', link: '/2023/project-beta/' },
-                { text: '아키텍처', link: '/2023/project-beta/architecture' },
-                { text: '설치', link: '/2023/project-beta/setup' },
-              ],
-            },
-            {
-              text: 'Project Gamma',
-              items: [
-                { text: '개요', link: '/2023/project-gamma/' },
-              ],
-            },
-          ],
-        },
-      ],
-
-      // ── 2022 ──────────────────────────────────────────────
-      '/2022/': [
-        {
-          text: '2022',
-          items: [
-            {
-              text: 'Project Alpha',
-              items: [
-                { text: '개요', link: '/2022/project-alpha/' },
-                { text: '아키텍처', link: '/2022/project-alpha/architecture' },
-                { text: '설치', link: '/2022/project-alpha/setup' },
-              ],
-            },
-            {
-              text: 'Project Beta',
-              items: [
-                { text: '개요', link: '/2022/project-beta/' },
-                { text: '아키텍처', link: '/2022/project-beta/architecture' },
-                { text: '설치', link: '/2022/project-beta/setup' },
-              ],
-            },
-            {
-              text: 'Project Gamma',
-              items: [
-                { text: '개요', link: '/2022/project-gamma/' },
-              ],
-            },
-          ],
-        },
-      ],
-
-      // ── 2021 ──────────────────────────────────────────────
-      '/2021/': [
-        {
-          text: '2021',
-          items: [
-            {
-              text: 'Project Alpha',
-              items: [
-                { text: '개요', link: '/2021/project-alpha/' },
-                { text: '아키텍처', link: '/2021/project-alpha/architecture' },
-                { text: '설치', link: '/2021/project-alpha/setup' },
-              ],
-            },
-            {
-              text: 'Project Beta',
-              items: [
-                { text: '개요', link: '/2021/project-beta/' },
-                { text: '아키텍처', link: '/2021/project-beta/architecture' },
-                { text: '설치', link: '/2021/project-beta/setup' },
-              ],
-            },
-          ],
-        },
-      ],
-
-      // ── 2020 ──────────────────────────────────────────────
-      '/2020/': [
-        {
-          text: '2020',
-          items: [
-            {
-              text: 'Project Alpha',
-              items: [
-                { text: '개요', link: '/2020/project-alpha/' },
-                { text: '아키텍처', link: '/2020/project-alpha/architecture' },
-                { text: '설치', link: '/2020/project-alpha/setup' },
-              ],
-            },
-            {
-              text: 'Project Beta',
-              items: [
-                { text: '개요', link: '/2020/project-beta/' },
-                { text: '아키텍처', link: '/2020/project-beta/architecture' },
-                { text: '설치', link: '/2020/project-beta/setup' },
-              ],
-            },
-          ],
-        },
-      ],
-
-      // ── Guide ─────────────────────────────────────────────
-      '/guide/': [
-        {
-          text: '가이드',
-          items: [
-            { text: '개요', link: '/guide/' },
-            { text: '문서 관리', link: '/guide/docs-management' },
-            { text: 'MDX 작성법', link: '/guide/mdx-writing' },
-            { text: '컴포넌트', link: '/guide/components' },
-            { text: '커스터마이징', link: '/guide/customization' },
-          ],
-        },
-      ],
-    },
+    sidebar,
+    categories,
+    homeProjects,
 
     search: {
       provider: 'local'
@@ -262,17 +231,72 @@ export default defineConfig({
     sidebarMenuLabel: '메뉴',
   },
 
-  // 마이그레이션 중 콘텐츠 내 dead link 무시 (Phase 8 검증 시 재활성화 권장)
   ignoreDeadLinks: true,
 
   markdown: {
     lineNumbers: true,
+    config: (md) => {
+      // .md 내 <model>, <base> 등 비표준 태그를 자동 이스케이프
+      const knownHtml = new Set(['a','abbr','address','area','article','aside','audio','b','base','bdi','bdo','blockquote','body','br','button','canvas','caption','cite','code','col','colgroup','data','datalist','dd','del','details','dfn','dialog','div','dl','dt','em','embed','fieldset','figcaption','figure','footer','form','h1','h2','h3','h4','h5','h6','head','header','hgroup','hr','html','i','iframe','img','input','ins','kbd','label','legend','li','link','main','map','mark','menu','meta','meter','nav','noscript','object','ol','optgroup','option','output','p','param','picture','pre','progress','q','rp','rt','ruby','s','samp','script','search','section','select','slot','small','source','span','strong','style','sub','summary','sup','table','tbody','td','template','textarea','tfoot','th','thead','time','title','tr','track','u','ul','var','video','wbr','svg','path','circle','line','rect','text','g','defs','use','symbol'])
+      const knownVue = new Set(['Badge','Button','Callout','Mermaid','Asciinema','Tabs','Tab','Steps','Step','Columns','Column','Details','Hint','Accordion','Accordions','HomePage'])
+
+      const origHtmlInline = md.renderer.rules.html_inline
+      md.renderer.rules.html_inline = (tokens, idx, options, env, self) => {
+        const content = tokens[idx].content
+        const m = content.match(/^<\/?([a-zA-Z][\w_-]*)/)
+        if (m) {
+          const tag = m[1]
+          if (!knownHtml.has(tag.toLowerCase()) && !knownVue.has(tag) && !/^[A-Z]/.test(tag)) {
+            return content.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          }
+        }
+        return origHtmlInline ? origHtmlInline(tokens, idx, options, env, self) : content
+      }
+
+      const origHtmlBlock = md.renderer.rules.html_block
+      md.renderer.rules.html_block = (tokens, idx, options, env, self) => {
+        const content = tokens[idx].content
+        const m = content.match(/^<\/?([a-zA-Z][\w_-]*)/)
+        if (m) {
+          const tag = m[1]
+          if (!knownHtml.has(tag.toLowerCase()) && !knownVue.has(tag) && !/^[A-Z]/.test(tag)) {
+            return content.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          }
+        }
+        return origHtmlBlock ? origHtmlBlock(tokens, idx, options, env, self) : content
+      }
+    },
   },
 
   vite: {
     server: {
       host: '0.0.0.0',
       port: 3030,
-    }
+    },
+    plugins: [{
+      name: 'auto-restart-on-new-docs',
+      configureServer(server) {
+        // Vite 내장 watcher 활용 (chokidar 기반)
+        const watcher = server.watcher
+        watcher.on('addDir', (dirPath: string) => {
+          if (dirPath.startsWith(docsRoot) && !dirPath.includes('.vitepress') && !dirPath.includes('node_modules')) {
+            console.log(`[auto-sidebar] 새 디렉토리 감지: ${dirPath} — 서버 재시작`)
+            setTimeout(() => server.restart(), 500)
+          }
+        })
+        watcher.on('add', (filePath: string) => {
+          if (filePath.endsWith('.md') && filePath.startsWith(docsRoot) && !filePath.includes('.vitepress')) {
+            console.log(`[auto-sidebar] 새 문서 감지: ${filePath} — 서버 재시작`)
+            setTimeout(() => server.restart(), 500)
+          }
+        })
+        watcher.on('unlink', (filePath: string) => {
+          if (filePath.endsWith('.md') && filePath.startsWith(docsRoot) && !filePath.includes('.vitepress')) {
+            console.log(`[auto-sidebar] 문서 삭제 감지: ${filePath} — 서버 재시작`)
+            setTimeout(() => server.restart(), 500)
+          }
+        })
+      }
+    }]
   }
 })

@@ -4,41 +4,11 @@
   생성일: 2026-04-08
 -->
 <script setup>
-const projects = [
-  { year: '2026', items: [
-    { name: 'Openstack Helm', desc: '', href: '/2026/openstack-helm/openstack-helm_quick_guide' },
-    { name: 'Project Gamma 개요', desc: '실시간 데이터 파이프라인 프로젝트', href: '/2026/project-gamma/' },
-  ]},
-  { year: '2025', items: [
-    { name: 'Project Alpha 개요', desc: '클라우드 인프라 자동화 프로젝트', href: '/2025/project-alpha/' },
-    { name: 'Project Beta 개요', desc: '통합 인증 시스템 프로젝트', href: '/2025/project-beta/' },
-    { name: 'Project Alpha 개요', desc: '클라우드 인프라 자동화 프로젝트 v2', href: '/2025/project-alpha-v2/' },
-    { name: 'Project Delta 개요', desc: 'Project Delta 개요', href: '/2025/project-delta/' },
-  ]},
-  { year: '2024', items: [
-    { name: 'alpha 2024 개요', desc: '2024년 project-alpha 프로젝트', href: '/2024/project-alpha/' },
-    { name: 'beta 2024 개요', desc: '2024년 project-beta 프로젝트', href: '/2024/project-beta/' },
-    { name: 'gamma 2024 개요', desc: '', href: '/2024/project-gamma/' },
-  ]},
-  { year: '2023', items: [
-    { name: 'alpha 2023 개요', desc: '2023년 project-alpha 프로젝트', href: '/2023/project-alpha/' },
-    { name: 'beta 2023 개요', desc: '2023년 project-beta 프로젝트', href: '/2023/project-beta/' },
-    { name: 'gamma 2023 개요', desc: '', href: '/2023/project-gamma/' },
-  ]},
-  { year: '2022', items: [
-    { name: 'alpha 2022 개요', desc: '2022년 project-alpha 프로젝트', href: '/2022/project-alpha/' },
-    { name: 'beta 2022 개요', desc: '2022년 project-beta 프로젝트', href: '/2022/project-beta/' },
-    { name: 'gamma 2022 개요', desc: '', href: '/2022/project-gamma/' },
-  ]},
-  { year: '2021', items: [
-    { name: 'alpha 2021 개요', desc: '2021년 project-alpha 프로젝트', href: '/2021/project-alpha/' },
-    { name: 'beta 2021 개요', desc: '2021년 project-beta 프로젝트', href: '/2021/project-beta/' },
-  ]},
-  { year: '2020', items: [
-    { name: 'alpha 2020 개요', desc: '2020년 project-alpha 프로젝트', href: '/2020/project-alpha/' },
-    { name: 'beta 2020 개요', desc: '2020년 project-beta 프로젝트', href: '/2020/project-beta/' },
-  ]},
-]
+import { computed } from 'vue'
+import { useData } from 'vitepress'
+
+const { theme } = useData()
+const projects = computed(() => theme.value.homeProjects || [])
 </script>
 
 <template>
@@ -81,7 +51,7 @@ const projects = [
 
 <style scoped>
 .home-page { min-height: 100vh; padding: 4rem 1rem; }
-.home-container { max-width: 56rem; margin: 0 auto; }
+.home-container { max-width: 90rem; margin: 0 auto; padding: 0 2rem; }
 
 /* Hero */
 .hero-section { text-align: center; margin-bottom: 4rem; }
@@ -108,6 +78,8 @@ const projects = [
 
 /* Card Grid */
 .card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+@media (min-width: 1024px) { .card-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1440px) { .card-grid { grid-template-columns: repeat(4, 1fr); } }
 @media (max-width: 640px) { .card-grid { grid-template-columns: 1fr; } }
 
 .project-card {

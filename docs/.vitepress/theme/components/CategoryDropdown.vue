@@ -1,31 +1,24 @@
 <!-- CategoryDropdown.vue: 연도/카테고리 선택 커스텀 드롭다운 | 생성일: 2026-04-08 | 수정일: 2026-04-09 -->
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute, useRouter } from 'vitepress'
+import { useRoute, useRouter, useData } from 'vitepress'
 
 const route = useRoute()
 const router = useRouter()
+const { theme } = useData()
 const isOpen = ref(false)
 const dropdownRef = ref(null)
 
-const categories = [
-  { label: '2026', path: '/2026/openstack-helm/openstack-helm_quick_guide' },
-  { label: '2025', path: '/2025/project-alpha/' },
-  { label: '2024', path: '/2024/project-alpha/' },
-  { label: '2023', path: '/2023/project-alpha/' },
-  { label: '2022', path: '/2022/project-alpha/' },
-  { label: '2021', path: '/2021/project-alpha/' },
-  { label: '2020', path: '/2020/project-alpha/' },
-  { label: 'Guide', path: '/guide/' },
-]
+// themeConfig.categories에서 자동 생성된 목록 사용
+const categories = computed(() => theme.value.categories || [])
 
 const currentCategory = computed(() => {
   const path = route.path
-  for (const cat of categories) {
+  for (const cat of categories.value) {
     if (cat.label === 'Guide' && path.startsWith('/guide')) return cat.label
     if (path.startsWith('/' + cat.label + '/')) return cat.label
   }
-  return categories[0].label
+  return categories.value[0]?.label || ''
 })
 
 function toggle() {
