@@ -4,7 +4,9 @@ import DefaultTheme from 'vitepress/theme'
 import { useData, useRoute } from 'vitepress'
 import { watchEffect, onUnmounted } from 'vue'
 import CategoryDropdown from './CategoryDropdown.vue'
+import VersionSelector from './VersionSelector.vue'
 import SidebarFooter from './SidebarFooter.vue'
+import DocHeader from './DocHeader.vue'
 
 const { Layout } = DefaultTheme
 const { frontmatter } = useData()
@@ -31,9 +33,13 @@ onUnmounted(() => {
     <template #sidebar-nav-before>
       <a href="/" class="sidebar-title">Tech Docs Portal</a>
       <CategoryDropdown />
+      <VersionSelector />
     </template>
     <template #sidebar-nav-after>
       <SidebarFooter />
+    </template>
+    <template #doc-before>
+      <DocHeader />
     </template>
   </Layout>
 </template>

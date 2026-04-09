@@ -274,11 +274,19 @@ a.mdx-button--solid:hover {
   color: #e4e4e7;
 }
 
-/* ── 문서 페이지: navbar 완전 숨김 + 사이드바 전체 높이 ── */
+/* ── 문서 페이지: navbar 완전 숨김 + 사이드바/TOC 전체 높이 ── */
 body.hide-navbar .VPNav { display: none !important; }
-body.hide-navbar .VPSidebar { top: 0 !important; height: 100vh !important; }
+body.hide-navbar .VPSidebar { top: 0 !important; height: 100vh !important; padding-top: 1.0rem !important; }
 body.hide-navbar .VPContent { padding-top: 0 !important; }
 body.hide-navbar .VPDoc { padding-top: 1.5rem !important; }
+/* navbar 숨김 시 TOC 상단 공백 제거 */
+body.hide-navbar .aside-container {
+  padding-top: 1.5rem !important;
+}
+/* navbar 숨김 시 콘텐츠 상단 공백 제거 */
+body.hide-navbar .VPDoc .content {
+  padding-top: 0 !important;
+}
 
 /* ── 사이드바 타이틀 (랜딩 링크) ── */
 .sidebar-title {

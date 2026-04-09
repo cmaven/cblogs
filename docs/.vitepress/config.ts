@@ -45,10 +45,6 @@ export default defineConfig({
         {
           text: 'Project Alpha v1',
           items: [
-            { text: '버전 전환', items: [
-              { text: 'v1 (현재)', link: '/2025/project-alpha/' },
-              { text: 'v2', link: '/2025/project-alpha-v2/' },
-            ]},
             { text: '개요', link: '/2025/project-alpha/' },
             { text: 'API 가이드', link: '/2025/project-alpha/api-guide' },
             { text: '아키텍처', link: '/2025/project-alpha/architecture' },
@@ -59,10 +55,6 @@ export default defineConfig({
         {
           text: 'Project Alpha v2',
           items: [
-            { text: '버전 전환', items: [
-              { text: 'v1', link: '/2025/project-alpha/' },
-              { text: 'v2 (현재)', link: '/2025/project-alpha-v2/' },
-            ]},
             { text: '개요', link: '/2025/project-alpha-v2/' },
             { text: 'API 가이드', link: '/2025/project-alpha-v2/api-guide' },
             { text: '아키텍처', link: '/2025/project-alpha-v2/architecture' },
