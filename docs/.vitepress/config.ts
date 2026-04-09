@@ -269,6 +269,21 @@ export default defineConfig({
   markdown: {
     lineNumbers: true,
     config: (md) => {
+      // mermaid 코드블록을 <Mermaid> 컴포넌트로 변환
+      const fence = md.renderer.rules.fence!
+      md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+        const token = tokens[idx]
+        if (token.info.trim() === 'mermaid') {
+          const chart = token.content
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+          return `<Mermaid chart="${chart}" />\n`
+        }
+        return fence(tokens, idx, options, env, self)
+      }
+
       // .md 내 <model>, <base> 등 비표준 태그를 자동 이스케이프
       const knownHtml = new Set(['a','abbr','address','area','article','aside','audio','b','base','bdi','bdo','blockquote','body','br','button','canvas','caption','cite','code','col','colgroup','data','datalist','dd','del','details','dfn','dialog','div','dl','dt','em','embed','fieldset','figcaption','figure','footer','form','h1','h2','h3','h4','h5','h6','head','header','hgroup','hr','html','i','iframe','img','input','ins','kbd','label','legend','li','link','main','map','mark','menu','meta','meter','nav','noscript','object','ol','optgroup','option','output','p','param','picture','pre','progress','q','rp','rt','ruby','s','samp','script','search','section','select','slot','small','source','span','strong','style','sub','summary','sup','table','tbody','td','template','textarea','tfoot','th','thead','time','title','tr','track','u','ul','var','video','wbr','svg','path','circle','line','rect','text','g','defs','use','symbol'])
       const knownVue = new Set(['Badge','Button','Callout','Mermaid','Asciinema','Tabs','Tab','Steps','Step','Columns','Column','Details','Hint','Accordion','Accordions','HomePage'])
