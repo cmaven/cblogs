@@ -4,7 +4,7 @@
 # ============================================================
 
 services:
-  docs-portal:
+  cdocs:
     image: node:20-alpine
     working_dir: /app
     ports:
