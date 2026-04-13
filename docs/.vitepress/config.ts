@@ -1,7 +1,7 @@
 /**
- * config.ts: VitePress 사이트 설정 - 자동 사이드바 생성 포함
- * 상세: docs/ 하위에 .md 파일을 배치하면 사이드바에 자동 등록
- * 생성일: 2026-04-08 | 수정일: 2026-04-09
+ * config.ts: cblogs 블로그 설정 - 포스트 자동 스캔 + 카테고리 집계
+ * 상세: docs/posts/ 하위 md 파일을 스캔하여 blogPosts, blogCategories 생성
+ * 생성일: 2026-04-13 | 수정일: 2026-04-13
  */
 import { defineConfig } from 'vitepress'
 import fs from 'node:fs'
@@ -9,225 +9,132 @@ import path from 'node:path'
 import matter from 'gray-matter'
 
 const docsRoot = path.resolve(__dirname, '..')
+const postsRoot = path.join(docsRoot, 'posts')
 
-/**
- * .md 파일에서 frontmatter title을 읽거나, 파일명을 포맷하여 반환
- */
-function getTitle(filePath: string, fileName: string): string {
-  try {
-    const content = fs.readFileSync(filePath, 'utf-8')
-    const { data } = matter(content)
-    if (data.title) return data.title
-  } catch {}
-  if (fileName === 'index') return '개요'
-  return fileName
-    .replace(/[-_]/g, ' ')
-    .replace(/\b\w/g, c => c.toUpperCase())
+/** 카테고리 한글 매핑 */
+const categoryLabels: Record<string, string> = {
+  tech: '기술',
+  life: '라이프',
+}
+
+const subcategoryLabels: Record<string, string> = {
+  frontend: '프론트엔드',
+  backend: '백엔드',
+  productivity: '생산성',
+  review: '리뷰',
+}
+
+interface BlogPost {
+  title: string
+  date: string
+  category: string
+  categoryLabel: string
+  subcategory: string
+  subcategoryLabel: string
+  excerpt: string
+  tags: string[]
+  link: string
+}
+
+interface SubCategory {
+  key: string
+  label: string
+  count: number
+}
+
+interface BlogCategory {
+  key: string
+  label: string
+  count: number
+  subcategories: SubCategory[]
 }
 
 /**
- * 디렉토리 내 .md 파일을 스캔하여 사이드바 아이템 배열 생성
- * index.md는 "개요"로 맨 앞에 배치
+ * posts/ 디렉토리를 스캔하여 모든 블로그 포스트 메타데이터 수집
  */
-function scanDirectory(dirPath: string, urlPrefix: string): { text: string; link: string }[] {
-  if (!fs.existsSync(dirPath)) return []
+function scanBlogPosts(): BlogPost[] {
+  const posts: BlogPost[] = []
 
-  const files = fs.readdirSync(dirPath)
-    .filter(f => f.endsWith('.md') && !f.startsWith('.'))
-    .sort()
+  if (!fs.existsSync(postsRoot)) return posts
 
-  const items: { text: string; link: string }[] = []
+  const categories = fs.readdirSync(postsRoot).filter(d =>
+    fs.statSync(path.join(postsRoot, d)).isDirectory() && !d.startsWith('.')
+  )
 
-  // index.md를 먼저 처리
-  if (files.includes('index.md')) {
-    const title = getTitle(path.join(dirPath, 'index.md'), 'index')
-    items.push({ text: title, link: `${urlPrefix}` })
-  }
+  for (const cat of categories) {
+    const catPath = path.join(postsRoot, cat)
+    const subcats = fs.readdirSync(catPath).filter(d =>
+      fs.statSync(path.join(catPath, d)).isDirectory() && !d.startsWith('.')
+    )
 
-  // 나머지 파일
-  for (const file of files) {
-    if (file === 'index.md') continue
-    const name = file.replace('.md', '')
-    const title = getTitle(path.join(dirPath, file), name)
-    items.push({ text: title, link: `${urlPrefix}${name}` })
-  }
+    for (const sub of subcats) {
+      const subPath = path.join(catPath, sub)
+      const files = fs.readdirSync(subPath).filter(f => f.endsWith('.md') && !f.startsWith('.'))
 
-  return items
-}
-
-/**
- * 연도 디렉토리(2020~2026) 내 프로젝트를 자동 스캔하여 사이드바 생성
- */
-function generateSidebar(): Record<string, any[]> {
-  const sidebar: Record<string, any[]> = {}
-  const entries = fs.readdirSync(docsRoot).filter(entry => {
-    const fullPath = path.join(docsRoot, entry)
-    return fs.statSync(fullPath).isDirectory() && !entry.startsWith('.')
-  })
-
-  for (const entry of entries) {
-    const entryPath = path.join(docsRoot, entry)
-
-    // guide/ 디렉토리는 특별 처리
-    if (entry === 'guide') {
-      const items = scanDirectory(entryPath, '/guide/')
-      if (items.length > 0) {
-        sidebar['/guide/'] = [{ text: '가이드', items }]
-      }
-      continue
-    }
-
-    // public/, .vitepress 등은 건너뛰기
-    if (entry === 'public' || entry === '.vitepress') continue
-
-    // 연도 디렉토리 (2020, 2021, ...) 처리
-    const isYear = /^\d{4}$/.test(entry)
-    if (!isYear) continue
-
-    const yearPath = entryPath
-    const projects = fs.readdirSync(yearPath).filter(p => {
-      return fs.statSync(path.join(yearPath, p)).isDirectory() && !p.startsWith('.')
-    }).sort()
-
-    // 버전 그룹 감지: project-alpha와 project-alpha-v2 등
-    const versionGroups = new Map<string, string[]>()
-    for (const proj of projects) {
-      const baseMatch = proj.match(/^(.+?)(-v\d+)?$/)
-      const base = baseMatch ? baseMatch[1] : proj
-      if (!versionGroups.has(base)) versionGroups.set(base, [])
-      versionGroups.get(base)!.push(proj)
-    }
-
-    // 버전이 있는 프로젝트 이름 수집
-    const versionedProjects = new Set<string>()
-    for (const [base, versions] of versionGroups) {
-      if (versions.length > 1) {
-        versions.forEach(v => versionedProjects.add(v))
-      }
-    }
-
-    // 각 프로젝트별 사이드바 생성 (버전 프로젝트는 개별 경로)
-    const allProjItems: { proj: string; item: any }[] = []
-    for (const proj of projects) {
-      const projPath = path.join(yearPath, proj)
-      const urlPrefix = `/${entry}/${proj}/`
-      const items = scanDirectory(projPath, urlPrefix)
-      if (items.length > 0) {
-        allProjItems.push({ proj, item: { text: formatName(proj), items, collapsed: true } })
-      }
-    }
-
-    // 버전 프로젝트: 해당 버전 + 비버전 프로젝트만 표시하는 개별 사이드바
-    for (const proj of versionedProjects) {
-      const baseMatch = proj.match(/^(.+?)(-v\d+)?$/)
-      const base = baseMatch ? baseMatch[1] : proj
-      const filteredItems = allProjItems
-        .filter(p => {
-          if (p.proj === proj) return true  // 현재 버전은 포함
-          if (versionedProjects.has(p.proj) && p.proj !== proj) return false  // 다른 버전은 제외
-          return true  // 비버전 프로젝트는 포함
-        })
-        .map(p => ({ ...p.item, collapsed: p.proj !== proj }))
-
-      sidebar[`/${entry}/${proj}/`] = [{ text: entry, items: filteredItems }]
-    }
-
-    // 연도 레벨 사이드바 (비버전 프로젝트용 폴백)
-    if (allProjItems.length > 0) {
-      sidebar[`/${entry}/`] = [{ text: entry, items: allProjItems.map(p => p.item) }]
-    }
-  }
-
-  return sidebar
-}
-
-/**
- * 디렉토리명을 사람이 읽기 좋은 형태로 변환
- * project-alpha → Project Alpha
- */
-function formatName(name: string): string {
-  return name
-    .split('-')
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ')
-}
-
-/**
- * 연도별 카테고리 목록 자동 생성 (CategoryDropdown용)
- * 각 연도의 첫 번째 프로젝트 첫 번째 페이지로 링크
- */
-function generateCategories(): { label: string; path: string }[] {
-  const categories: { label: string; path: string }[] = []
-  const entries = fs.readdirSync(docsRoot)
-    .filter(e => /^\d{4}$/.test(e) && fs.statSync(path.join(docsRoot, e)).isDirectory())
-    .sort()
-    .reverse()
-
-  for (const year of entries) {
-    const yearPath = path.join(docsRoot, year)
-    const projects = fs.readdirSync(yearPath)
-      .filter(p => fs.statSync(path.join(yearPath, p)).isDirectory() && !p.startsWith('.'))
-      .sort()
-    if (projects.length === 0) continue
-
-    // 첫 번째 프로젝트의 첫 번째 페이지
-    const firstProj = projects[0]
-    const projPath = path.join(yearPath, firstProj)
-    const files = fs.readdirSync(projPath).filter(f => f.endsWith('.md')).sort()
-    const firstFile = files.includes('index.md') ? '' : files[0]?.replace('.md', '') || ''
-    categories.push({ label: year, path: `/${year}/${firstProj}/${firstFile}` })
-  }
-
-  categories.push({ label: '가이드', path: '/guide/' })
-  return categories
-}
-
-/**
- * 랜딩 페이지 프로젝트 카드 자동 생성 (HomePage용)
- */
-function generateHomeProjects(): { year: string; items: { name: string; desc: string; href: string }[] }[] {
-  const result: { year: string; items: { name: string; desc: string; href: string }[] }[] = []
-  const years = fs.readdirSync(docsRoot)
-    .filter(e => /^\d{4}$/.test(e) && fs.statSync(path.join(docsRoot, e)).isDirectory())
-    .sort()
-    .reverse()
-
-  for (const year of years) {
-    const yearPath = path.join(docsRoot, year)
-    const projects = fs.readdirSync(yearPath)
-      .filter(p => fs.statSync(path.join(yearPath, p)).isDirectory() && !p.startsWith('.'))
-      .sort()
-
-    const items: { name: string; desc: string; href: string }[] = []
-    for (const proj of projects) {
-      const projPath = path.join(yearPath, proj)
-      const files = fs.readdirSync(projPath).filter(f => f.endsWith('.md')).sort()
-      const firstFile = files.includes('index.md') ? '' : files[0]?.replace('.md', '') || ''
-      const indexPath = path.join(projPath, 'index.md')
-      let name = formatName(proj)
-      let desc = ''
-      if (fs.existsSync(indexPath)) {
+      for (const file of files) {
+        const filePath = path.join(subPath, file)
         try {
-          const { data } = matter(fs.readFileSync(indexPath, 'utf-8'))
-          if (data.title) name = data.title
-          if (data.description) desc = data.description
+          const content = fs.readFileSync(filePath, 'utf-8')
+          const { data } = matter(content)
+          const slug = file.replace('.md', '')
+          posts.push({
+            title: data.title || slug,
+            date: data.date ? String(data.date).split('T')[0] : '2026-01-01',
+            category: cat,
+            categoryLabel: categoryLabels[cat] || cat,
+            subcategory: sub,
+            subcategoryLabel: subcategoryLabels[sub] || sub,
+            excerpt: data.excerpt || '',
+            tags: data.tags || [],
+            link: `/posts/${cat}/${sub}/${slug}`,
+          })
         } catch {}
       }
-      items.push({ name, desc, href: `/${year}/${proj}/${firstFile}` })
     }
-    if (items.length > 0) result.push({ year, items })
   }
+
+  // 날짜 역순 정렬
+  posts.sort((a, b) => b.date.localeCompare(a.date))
+  return posts
+}
+
+/**
+ * 포스트 목록에서 카테고리 트리 생성
+ */
+function buildCategories(posts: BlogPost[]): BlogCategory[] {
+  const catMap = new Map<string, { label: string; subMap: Map<string, { label: string; count: number }> }>()
+
+  for (const post of posts) {
+    if (!catMap.has(post.category)) {
+      catMap.set(post.category, { label: post.categoryLabel, subMap: new Map() })
+    }
+    const cat = catMap.get(post.category)!
+    if (!cat.subMap.has(post.subcategory)) {
+      cat.subMap.set(post.subcategory, { label: post.subcategoryLabel, count: 0 })
+    }
+    cat.subMap.get(post.subcategory)!.count++
+  }
+
+  const result: BlogCategory[] = []
+  for (const [key, val] of catMap) {
+    const subcategories: SubCategory[] = []
+    let totalCount = 0
+    for (const [subKey, subVal] of val.subMap) {
+      subcategories.push({ key: subKey, label: subVal.label, count: subVal.count })
+      totalCount += subVal.count
+    }
+    result.push({ key, label: val.label, count: totalCount, subcategories })
+  }
+
   return result
 }
 
-// 사이드바 + 카테고리 + 홈 프로젝트 자동 생성
-const sidebar = generateSidebar()
-const categories = generateCategories()
-const homeProjects = generateHomeProjects()
+const blogPosts = scanBlogPosts()
+const blogCategories = buildCategories(blogPosts)
 
 export default defineConfig({
-  title: 'Tech Docs Portal',
-  description: '사내 기술 문서 포털',
+  title: 'cblogs',
+  description: '정보전달 블로그',
   lang: 'ko-KR',
 
   head: [
@@ -237,22 +144,14 @@ export default defineConfig({
 
   themeConfig: {
     nav: [],
-    sidebar,
-    categories,
-    homeProjects,
+    sidebar: {},
+    blogPosts,
+    blogCategories,
+    totalPostCount: blogPosts.length,
 
     search: {
       provider: 'local'
     },
-
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/cmaven' },
-      {
-        icon: { svg: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>' },
-        link: '/guide/',
-        ariaLabel: 'Guide'
-      }
-    ],
 
     outline: {
       level: [2, 3],
@@ -267,86 +166,37 @@ export default defineConfig({
   ignoreDeadLinks: true,
 
   markdown: {
-    lineNumbers: true,
-    config: (md) => {
-      // mermaid 코드블록을 <Mermaid> 컴포넌트로 변환
-      const fence = md.renderer.rules.fence!
-      md.renderer.rules.fence = (tokens, idx, options, env, self) => {
-        const token = tokens[idx]
-        if (token.info.trim() === 'mermaid') {
-          const chart = token.content
-            .replace(/&/g, '&amp;')
-            .replace(/"/g, '&quot;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-          return `<Mermaid chart="${chart}" />\n`
-        }
-        return fence(tokens, idx, options, env, self)
-      }
-
-      // .md 내 <model>, <base> 등 비표준 태그를 자동 이스케이프
-      const knownHtml = new Set(['a','abbr','address','area','article','aside','audio','b','base','bdi','bdo','blockquote','body','br','button','canvas','caption','cite','code','col','colgroup','data','datalist','dd','del','details','dfn','dialog','div','dl','dt','em','embed','fieldset','figcaption','figure','footer','form','h1','h2','h3','h4','h5','h6','head','header','hgroup','hr','html','i','iframe','img','input','ins','kbd','label','legend','li','link','main','map','mark','menu','meta','meter','nav','noscript','object','ol','optgroup','option','output','p','param','picture','pre','progress','q','rp','rt','ruby','s','samp','script','search','section','select','slot','small','source','span','strong','style','sub','summary','sup','table','tbody','td','template','textarea','tfoot','th','thead','time','title','tr','track','u','ul','var','video','wbr','svg','path','circle','line','rect','text','g','defs','use','symbol'])
-      const knownVue = new Set(['Badge','Button','Callout','Mermaid','Asciinema','Tabs','Tab','Steps','Step','Columns','Column','Details','Hint','Accordion','Accordions','HomePage'])
-
-      const origHtmlInline = md.renderer.rules.html_inline
-      md.renderer.rules.html_inline = (tokens, idx, options, env, self) => {
-        const content = tokens[idx].content
-        const m = content.match(/^<\/?([a-zA-Z][\w_-]*)/)
-        if (m) {
-          const tag = m[1]
-          if (!knownHtml.has(tag.toLowerCase()) && !knownVue.has(tag) && !/^[A-Z]/.test(tag)) {
-            return content.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          }
-        }
-        return origHtmlInline ? origHtmlInline(tokens, idx, options, env, self) : content
-      }
-
-      const origHtmlBlock = md.renderer.rules.html_block
-      md.renderer.rules.html_block = (tokens, idx, options, env, self) => {
-        const content = tokens[idx].content
-        const m = content.match(/^<\/?([a-zA-Z][\w_-]*)/)
-        if (m) {
-          const tag = m[1]
-          if (!knownHtml.has(tag.toLowerCase()) && !knownVue.has(tag) && !/^[A-Z]/.test(tag)) {
-            return content.replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          }
-        }
-        return origHtmlBlock ? origHtmlBlock(tokens, idx, options, env, self) : content
-      }
-    },
+    lineNumbers: false,
   },
 
   vite: {
     server: {
       host: '0.0.0.0',
-      port: 3030,
+      port: 3031,
     },
     plugins: [{
-      name: 'auto-restart-on-new-docs',
+      name: 'auto-restart-on-new-posts',
       configureServer(server) {
         const watcher = server.watcher
         let restartTimer: ReturnType<typeof setTimeout> | null = null
-        let isRestarting = false
 
         function scheduleRestart(reason: string) {
-          if (isRestarting) return
-          console.log(`[auto-sidebar] ${reason}`)
+          console.log(`[auto-blog] ${reason}`)
           if (restartTimer) clearTimeout(restartTimer)
-          // 2초 디바운스: 마지막 변경 후 2초 뒤 재시작
           restartTimer = setTimeout(() => {
-            console.log('[auto-sidebar] 서버 재시작 중...')
-            process.exit(0)  // docs:watch 루프가 자동으로 재시작
+            console.log('[auto-blog] 서버 재시작 중...')
+            process.exit(0)
           }, 2000)
         }
 
-        function isDocsPath(p: string) {
-          return p.startsWith(docsRoot) && !p.includes('.vitepress') && !p.includes('node_modules')
+        function isPostsPath(p: string) {
+          return p.startsWith(postsRoot) && !p.includes('node_modules')
         }
 
-        watcher.on('addDir', (p: string) => { if (isDocsPath(p)) scheduleRestart(`새 디렉토리: ${p}`) })
-        watcher.on('add', (p: string) => { if (p.endsWith('.md') && isDocsPath(p)) scheduleRestart(`새 문서: ${p}`) })
-        watcher.on('unlink', (p: string) => { if (p.endsWith('.md') && isDocsPath(p)) scheduleRestart(`문서 삭제: ${p}`) })
-        watcher.on('unlinkDir', (p: string) => { if (isDocsPath(p)) scheduleRestart(`디렉토리 삭제: ${p}`) })
+        watcher.on('add', (p: string) => { if (p.endsWith('.md') && isPostsPath(p)) scheduleRestart(`새 포스트: ${p}`) })
+        watcher.on('unlink', (p: string) => { if (p.endsWith('.md') && isPostsPath(p)) scheduleRestart(`포스트 삭제: ${p}`) })
+        watcher.on('addDir', (p: string) => { if (isPostsPath(p)) scheduleRestart(`새 카테고리: ${p}`) })
+        watcher.on('unlinkDir', (p: string) => { if (isPostsPath(p)) scheduleRestart(`카테고리 삭제: ${p}`) })
       }
     }]
   }

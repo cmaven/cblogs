@@ -1,15 +1,9 @@
-/* style.css: VitePress 민트 테마 CSS (cmaven.github.io 참조) | 수정일: 2026-04-09 */
-
-/* ── 폰트 ── */
-@import url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2107@1.1/SUITE-Regular.woff2') format('woff2');
-@import url('https://cdn.jsdelivr.net/npm/d2coding@1.3.2/d2coding-all.css');
+/* style.css: cblogs 블로그 민트 테마 CSS | 생성일: 2026-04-13 */
 
 :root {
   --vp-font-family-base: 'SUITE Variable', 'SUITE-Regular', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --vp-font-family-mono: 'D2Coding ligature', 'D2Coding', Monaco, Consolas, monospace;
-
-  /* ── 레이아웃: 사이드바 왼쪽 끝, TOC 오른쪽 끝, 콘텐츠 가변 ── */
-  --vp-sidebar-width: 260px;
+  --vp-sidebar-width: 280px;
   --vp-layout-max-width: 100vw;
 }
 
@@ -33,13 +27,12 @@
   --vp-c-divider: rgba(207, 212, 211, 0.4);
   --vp-c-gutter: #e8eded;
 
-  --vp-c-default-1: #6b7a77;
-  --vp-c-default-2: rgba(207, 212, 211, 0.6);
-  --vp-c-default-3: #eaf0f0;
-  --vp-c-default-soft: rgba(207, 212, 211, 0.3);
+  --vp-sidebar-bg-color: #ffffff;
+  --vp-code-block-bg: #ffffff;
+  --vp-code-bg: rgba(17, 153, 158, 0.08);
 }
 
-/* ── Dark 모드: 민트 테마 ── */
+/* ── Dark 모드 ── */
 .dark {
   --vp-c-brand-1: #30e3ca;
   --vp-c-brand-2: #28c8b0;
@@ -59,13 +52,17 @@
   --vp-c-divider: rgba(48, 227, 202, 0.08);
   --vp-c-gutter: #242a29;
 
-  --vp-c-default-1: #8a9290;
-  --vp-c-default-2: rgba(48, 227, 202, 0.12);
-  --vp-c-default-3: #242a29;
-  --vp-c-default-soft: rgba(48, 227, 202, 0.06);
+  --vp-sidebar-bg-color: #1a1f1e;
+  --vp-code-block-bg: #0d1117;
+  --vp-code-bg: rgba(48, 227, 202, 0.1);
 }
 
-/* ── h1/h2 하단 구분선 ── */
+/* ── 문서 페이지 스타일 ── */
+.vp-doc {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  line-height: 1.85;
+}
 .vp-doc h1 {
   padding-bottom: 0.4em;
   border-bottom: 1px solid var(--vp-c-border);
@@ -74,285 +71,18 @@
 .vp-doc h2 {
   padding-bottom: 0.3em;
   border-bottom: 1px solid var(--vp-c-border);
-  border-top: none;
   margin-bottom: 0.8em;
 }
+.vp-doc h3 {
+  padding-left: 0.6em;
+  border-left: 3px solid var(--vp-c-brand-1);
+  margin-top: 2rem;
+}
+.vp-doc p { margin: 1em 0; }
+.vp-doc strong { color: var(--vp-c-text-1); font-weight: 700; }
+.vp-doc ul > li, .vp-doc ol > li { margin: 0.4em 0; }
 
-/* ── 테이블 디자인: 그라디언트 헤더 + 둥근 모서리 ── */
-.vp-doc table {
-  border-collapse: separate;
-  border-spacing: 0;
-  width: 100%;
-  border-radius: 8px;
-  border: 1px solid var(--vp-c-border);
-  overflow: hidden;
-  display: table;
-}
-.vp-doc thead {
-  background: rgba(17, 153, 158, 0.18);
-}
-:root .vp-doc thead th,
-.vp-doc table thead th {
-  padding: 0.65em 1em;
-  font-weight: 700;
-  font-size: 0.875em;
-  color: #0b7174;
-  text-align: left;
-  border-bottom: 2px solid rgba(17, 153, 158, 0.3);
-}
-.vp-doc thead th:not(:last-child) {
-  border-right: 1px solid var(--vp-c-border);
-}
-.vp-doc tbody tr {
-  transition: background-color 0.15s;
-}
-.vp-doc tbody tr:nth-child(even) {
-  background-color: var(--vp-c-bg-soft);
-}
-.vp-doc tbody tr:hover {
-  background-color: var(--vp-c-brand-soft);
-}
-.vp-doc tbody td {
-  padding: 0.55em 1em;
-  border-bottom: 1px solid var(--vp-c-border);
-  font-size: 0.875em;
-  color: var(--vp-c-text-1);
-}
-.vp-doc tbody td:not(:last-child) {
-  border-right: 1px solid var(--vp-c-border);
-}
-
-/* 다크모드 테이블 헤더 */
-.dark .vp-doc thead {
-  background: rgba(48, 227, 202, 0.12);
-}
-.dark .vp-doc thead th {
-  color: #30e3ca;
-  font-weight: 700;
-}
-
-/* ── 코드블록 ── */
-pre, code, kbd, samp {
-  font-family: var(--vp-font-family-mono) !important;
-}
-
-/* ── 이미지 반응형 ── */
-.vp-doc img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  border: 1px solid var(--vp-c-border);
-  margin: 1rem 0;
-}
-
-/* ── Mermaid 다이어그램 ── */
-.mermaid-wrapper svg {
-  max-width: 100%;
-  height: auto;
-}
-
-/* ── MDX Button 컴포넌트 ── */
-a.mdx-button {
-  display: inline-block;
-  font-size: 0.875rem;
-  line-height: 2rem;
-  padding: 0 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.15s ease;
-  font-weight: 500;
-}
-a.mdx-button--outline {
-  color: var(--vp-c-brand-1);
-  border: 1px solid var(--vp-c-brand-1);
-  background: transparent;
-}
-a.mdx-button--outline:hover {
-  background: var(--vp-c-brand-soft);
-  text-decoration: none;
-}
-a.mdx-button--solid {
-  color: #ffffff;
-  background: var(--vp-c-brand-1);
-  border: 1px solid var(--vp-c-brand-1);
-}
-a.mdx-button--solid:hover {
-  opacity: 0.9;
-  text-decoration: none;
-}
-
-/* ── MDX Columns 컴포넌트 ── */
-.mdx-columns {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin: 1rem 0;
-}
-.mdx-column {
-  flex: 1 1 0%;
-  min-width: 200px;
-}
-@media (max-width: 768px) {
-  .mdx-columns {
-    flex-direction: column;
-  }
-  .mdx-column {
-    min-width: 100%;
-  }
-}
-
-/* ── MDX Asciinema 컴포넌트 ── */
-.mdx-asciinema {
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--vp-c-border);
-}
-
-/* ── Callout / Custom Block: old 디자인 (좌측 세로라인 + 아이콘 + 그림자) ── */
-.custom-block {
-  border: none !important;
-  border-left: 4px solid !important;
-  border-radius: 4px !important;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  padding: 16px 16px 8px 16px;
-  color: var(--vp-c-text-1);
-}
-.custom-block.info {
-  border-left-color: #3b82f6 !important;
-  background-color: rgba(59, 130, 246, 0.06);
-}
-.custom-block.tip {
-  border-left-color: #10b981 !important;
-  background-color: rgba(16, 185, 129, 0.06);
-}
-.custom-block.warning {
-  border-left-color: #f59e0b !important;
-  background-color: rgba(245, 158, 11, 0.06);
-}
-.custom-block.danger {
-  border-left-color: #ef4444 !important;
-  background-color: rgba(239, 68, 68, 0.06);
-}
-.custom-block.note {
-  border-left-color: #8b5cf6 !important;
-  background-color: rgba(139, 92, 246, 0.06);
-}
-/* Callout 타이틀 아이콘 */
-.custom-block-title::before {
-  margin-right: 0.4em;
-}
-.custom-block.info .custom-block-title::before { content: 'ℹ️'; }
-.custom-block.tip .custom-block-title::before { content: '✅'; }
-.custom-block.warning .custom-block-title::before { content: '⚠️'; }
-.custom-block.danger .custom-block-title::before { content: '❌'; }
-.custom-block.note .custom-block-title::before { content: '📝'; }
-/* 다크모드 Callout 배경 */
-.dark .custom-block.info { background-color: rgba(59, 130, 246, 0.1); }
-.dark .custom-block.tip { background-color: rgba(16, 185, 129, 0.1); }
-.dark .custom-block.warning { background-color: rgba(245, 158, 11, 0.1); }
-.dark .custom-block.danger { background-color: rgba(239, 68, 68, 0.1); }
-.dark .custom-block.note { background-color: rgba(139, 92, 246, 0.1); }
-
-/* ── 코드블록: 라이트=흰색 배경, 다크=고대비 ── */
-:root {
-  --vp-code-block-bg: #ffffff;
-  --vp-code-bg: rgba(17, 153, 158, 0.08);
-}
-.dark {
-  --vp-code-block-bg: #0d1117;
-  --vp-code-bg: rgba(48, 227, 202, 0.1);
-}
-/* 코드블록 스타일 */
-.vp-doc div[class*='language-'] {
-  border-radius: 8px;
-  border: 1px solid var(--vp-c-border);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-}
-/* 다크모드에서만 밝은 텍스트 */
-.dark .vp-doc div[class*='language-'] code {
-  color: #e4e4e7;
-}
-
-/* ── 문서 페이지: navbar 완전 숨김 + 사이드바/TOC 전체 높이 ── */
-body.hide-navbar .VPNav { display: none !important; }
-body.hide-navbar .VPSidebar { top: 0 !important; height: 100vh !important; padding-top: 1.0rem !important; }
-body.hide-navbar .VPContent { padding-top: 0 !important; }
-body.hide-navbar .VPDoc { padding-top: 1.5rem !important; }
-/* navbar 숨김 시 TOC 상단 공백 제거 */
-body.hide-navbar .aside-container {
-  padding-top: 1.5rem !important;
-}
-/* navbar 숨김 시 콘텐츠 상단 공백 제거 */
-body.hide-navbar .VPDoc .content {
-  padding-top: 0 !important;
-}
-
-/* ── 사이드바 배경 통일 + 너비 완전 고정 ── */
-:root {
-  --vp-sidebar-bg-color: #ffffff;
-}
-.dark {
-  --vp-sidebar-bg-color: #1a1f1e;
-}
-/* has-aside 유무와 관계없이 사이드바 너비 고정 */
-.VPSidebar {
-  width: var(--vp-sidebar-width) !important;
-  max-width: var(--vp-sidebar-width) !important;
-}
-body.hide-navbar .VPContent {
-  padding-left: var(--vp-sidebar-width) !important;
-}
-
-/* ── 사이드바 토글 (열기/닫기) ── */
-body.sidebar-collapsed .VPSidebar {
-  transform: translateX(-100%) !important;
-}
-body.sidebar-collapsed .VPContent.has-sidebar {
-  padding-left: 0 !important;
-}
-body.sidebar-collapsed .sidebar-footer {
-  display: none !important;
-}
-.VPSidebar {
-  transition: transform 0.25s ease !important;
-}
-.VPContent {
-  transition: padding-left 0.25s ease !important;
-}
-
-/* ── 사이드바 스타일 ── */
-.VPSidebar .VPSidebarItem.level-0 > .item > .text {
-  font-weight: 700;
-}
-/* 연도 그룹 제목 숨김 (드롭다운에서 이미 표시) */
-.VPSidebar .VPSidebarItem.level-0 > .item > .text {
-  display: none;
-}
-
-/* ── DocHeader 표시 시 본문 첫 h1 숨김 (중복 방지) ── */
-body.has-doc-header .vp-doc h1:first-child {
-  display: none !important;
-}
-body.has-doc-header .vp-doc > h1:first-of-type {
-  display: none !important;
-}
-body.has-doc-header .vp-doc > div > h1:first-child {
-  display: none !important;
-}
-
-/* ── 문서 본문 가독성 강화 ── */
-.vp-doc {
-  overflow-wrap: break-word;
-  word-break: break-word;
-  line-height: 1.85;
-}
-.vp-doc pre {
-  max-width: 100%;
-  overflow-x: auto;
-}
-
-/* ── 인라인 코드 강조 ── */
+/* ── 인라인 코드 ── */
 .vp-doc :not(pre) > code {
   padding: 2px 6px !important;
   border-radius: 4px !important;
@@ -367,57 +97,49 @@ body.has-doc-header .vp-doc > div > h1:first-child {
   border-color: rgba(48, 227, 202, 0.2);
 }
 
-/* ── h3 소제목 강화 ── */
-.vp-doc h3 {
-  padding-left: 0.6em;
-  border-left: 3px solid var(--vp-c-brand-1);
-  margin-top: 2rem;
+/* ── 코드블록 ── */
+pre, code, kbd, samp { font-family: var(--vp-font-family-mono) !important; }
+.vp-doc div[class*='language-'] {
+  border-radius: 8px;
+  border: 1px solid var(--vp-c-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.dark .vp-doc div[class*='language-'] code { color: #e4e4e7; }
+
+/* ── 테이블 ── */
+.vp-doc table {
+  border-collapse: separate; border-spacing: 0; width: 100%;
+  border-radius: 8px; border: 1px solid var(--vp-c-border); overflow: hidden; display: table;
+}
+.vp-doc thead { background: rgba(17, 153, 158, 0.18); }
+.vp-doc thead th {
+  padding: 0.65em 1em; font-weight: 700; font-size: 0.875em;
+  color: #0b7174; text-align: left; border-bottom: 2px solid rgba(17, 153, 158, 0.3);
+}
+.dark .vp-doc thead { background: rgba(48, 227, 202, 0.12); }
+.dark .vp-doc thead th { color: #30e3ca; }
+.vp-doc tbody tr:nth-child(even) { background-color: var(--vp-c-bg-soft); }
+.vp-doc tbody tr:hover { background-color: var(--vp-c-brand-soft); }
+.vp-doc tbody td { padding: 0.55em 1em; border-bottom: 1px solid var(--vp-c-border); font-size: 0.875em; }
+
+/* ── 이미지 ── */
+.vp-doc img {
+  max-width: 100%; height: auto; border-radius: 8px;
+  border: 1px solid var(--vp-c-border); margin: 1rem 0;
 }
 
-/* ── 단락 간격 ── */
-.vp-doc p {
-  margin: 1em 0;
+/* ── Callout ── */
+.custom-block {
+  border: none !important; border-left: 4px solid !important;
+  border-radius: 4px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 16px 16px 8px 16px; color: var(--vp-c-text-1);
 }
+.custom-block.info { border-left-color: #3b82f6 !important; background-color: rgba(59, 130, 246, 0.06); }
+.custom-block.tip { border-left-color: #10b981 !important; background-color: rgba(16, 185, 129, 0.06); }
+.custom-block.warning { border-left-color: #f59e0b !important; background-color: rgba(245, 158, 11, 0.06); }
+.custom-block.danger { border-left-color: #ef4444 !important; background-color: rgba(239, 68, 68, 0.06); }
 
-/* ── 불릿 리스트 간격 확대 ── */
-.vp-doc ul > li,
-.vp-doc ol > li {
-  margin: 0.4em 0;
-}
-.vp-doc ul,
-.vp-doc ol {
-  margin: 0.8em 0;
-}
-
-/* ── 볼드 텍스트 대비 강화 ── */
-.vp-doc strong {
-  color: var(--vp-c-text-1);
-  font-weight: 700;
-}
-
-/* ── 콘텐츠 영역: 사이드바~TOC 사이 전체 채움 (scoped CSS 오버라이드) ── */
-.VPDoc.has-aside .content-container {
-  max-width: none !important;
-}
-.VPDoc .container {
-  justify-content: flex-start !important;
-}
-.VPDoc .content {
-  margin: 0 !important;
-  padding-right: 16px !important;
-  padding-left: 16px !important;
-  max-width: none !important;
-}
-
-/* ── Aside/TOC 너비 오버라이드 (VitePress scoped CSS 대체) ── */
-.VPDoc .aside {
-  max-width: 220px !important;
-}
-.VPDoc .aside-container {
-  width: 220px !important;
-}
-
-/* ── 사이드바 내부: 푸터 고정 영역 확보 ── */
-.VPSidebar .nav {
-  padding-bottom: 5.5rem;
+/* ── 반응형 ── */
+@media (max-width: 768px) {
+  :root { --vp-sidebar-width: 0px; }
 }

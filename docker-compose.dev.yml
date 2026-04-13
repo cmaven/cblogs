@@ -1,14 +1,14 @@
 # ============================================================
-# docker-compose.dev.yml: VitePress 개발 환경 (볼륨 마운트 + HMR)
-# 생성일: 2026-04-08 | 수정일: 2026-04-08
+# docker-compose.dev.yml: cblogs 개발 환경 (볼륨 마운트 + HMR)
+# 생성일: 2026-04-13 | 수정일: 2026-04-13
 # ============================================================
 
 services:
-  cdocs:
+  cblogs:
     image: node:20-alpine
     working_dir: /app
     ports:
-      - "3030:3030"
+      - "3031:3031"
     volumes:
       - .:/app
       - node_modules:/app/node_modules
@@ -16,10 +16,10 @@ services:
       - CHOKIDAR_USEPOLLING=true
     command: sh -c "
       if [ ! -d /app/node_modules/vitepress ]; then
-        echo '📦 node_modules 없음 — npm install 실행...' &&
+        echo 'node_modules 없음 — npm install 실행...' &&
         npm install;
       else
-        echo '✅ node_modules 캐시 사용 — install 스킵';
+        echo 'node_modules 캐시 사용 — install 스킵';
       fi &&
       npm run docs:dev"
     restart: unless-stopped

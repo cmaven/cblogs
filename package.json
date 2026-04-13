@@ -1,16 +1,14 @@
 {
-  "name": "cdocs",
+  "name": "cblogs",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "docs:dev": "vitepress dev docs --port 3030",
-    "docs:watch": "while true; do npx vitepress dev docs --port 3030 --host 0.0.0.0; echo '[watch] 서버 재시작...'; sleep 1; done",
+    "docs:dev": "vitepress dev docs --port 3031",
+    "docs:watch": "while true; do npx vitepress dev docs --port 3031 --host 0.0.0.0; echo '[watch] 서버 재시작...'; sleep 1; done",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs --port 3030"
+    "docs:preview": "vitepress preview docs --port 3031"
   },
   "dependencies": {
-    "asciinema-player": "^3.15.1",
-    "mermaid": "^11.14.0",
     "vue": "^3.5.13"
   },
   "devDependencies": {
