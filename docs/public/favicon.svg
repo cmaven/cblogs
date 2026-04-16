@@ -1,0 +1,7 @@
+<!-- favicon.svg: cblogs 민트 테마 c 마크 | 생성일: 2026-04-16 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="14" fill="#11999e"/>
+  <text x="50%" y="50%" dominant-baseline="central" text-anchor="middle"
+        font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
+        font-size="40" font-weight="800" fill="#ffffff">c</text>
+</svg>

@@ -69,8 +69,11 @@
   margin-bottom: 1em;
 }
 .vp-doc h2 {
+  padding-top: 0 !important;
+  border-top: none !important;
   padding-bottom: 0.3em;
   border-bottom: 1px solid var(--vp-c-border);
+  margin-top: 2.5rem;
   margin-bottom: 0.8em;
 }
 .vp-doc h3 {
@@ -128,18 +131,88 @@ pre, code, kbd, samp { font-family: var(--vp-font-family-mono) !important; }
   border: 1px solid var(--vp-c-border); margin: 1rem 0;
 }
 
-/* ── Callout ── */
+/* ── Callout / GFM Alerts (GitHub 공식 팔레트) ── */
 .custom-block {
-  border: none !important; border-left: 4px solid !important;
-  border-radius: 4px !important; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  padding: 16px 16px 8px 16px; color: var(--vp-c-text-1);
+  border: none !important;
+  border-left: 4px solid !important;
+  border-radius: 4px !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 16px 16px 8px 16px;
+  color: var(--vp-c-text-1);
 }
-.custom-block.info { border-left-color: #3b82f6 !important; background-color: rgba(59, 130, 246, 0.06); }
-.custom-block.tip { border-left-color: #10b981 !important; background-color: rgba(16, 185, 129, 0.06); }
-.custom-block.warning { border-left-color: #f59e0b !important; background-color: rgba(245, 158, 11, 0.06); }
-.custom-block.danger { border-left-color: #ef4444 !important; background-color: rgba(239, 68, 68, 0.06); }
+.custom-block .custom-block-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.custom-block .custom-block-title svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Light 모드 — GitHub 컬러 */
+.custom-block.note      { border-left-color: #6e40c9 !important; background-color: rgba(110, 64, 201, 0.06); }
+.custom-block.note    .custom-block-title { color: #6e40c9; }
+.custom-block.tip       { border-left-color: #1a7f37 !important; background-color: rgba(26, 127, 55, 0.06); }
+.custom-block.tip     .custom-block-title { color: #1a7f37; }
+.custom-block.important { border-left-color: #8250df !important; background-color: rgba(130, 80, 223, 0.06); }
+.custom-block.important .custom-block-title { color: #8250df; }
+.custom-block.warning   { border-left-color: #9a6700 !important; background-color: rgba(154, 103, 0, 0.06); }
+.custom-block.warning .custom-block-title { color: #9a6700; }
+.custom-block.caution   { border-left-color: #cf222e !important; background-color: rgba(207, 34, 46, 0.06); }
+.custom-block.caution .custom-block-title { color: #cf222e; }
+/* VitePress ::: info / ::: danger 하위호환 */
+.custom-block.info      { border-left-color: #0969da !important; background-color: rgba(9, 105, 218, 0.06); }
+.custom-block.info    .custom-block-title { color: #0969da; }
+.custom-block.danger    { border-left-color: #cf222e !important; background-color: rgba(207, 34, 46, 0.06); }
+.custom-block.danger  .custom-block-title { color: #cf222e; }
+
+/* Dark 모드 — GitHub 다크 팔레트 */
+.dark .custom-block.note      { border-left-color: #b392f0 !important; background-color: rgba(179, 146, 240, 0.1); }
+.dark .custom-block.note    .custom-block-title { color: #b392f0; }
+.dark .custom-block.tip       { border-left-color: #3fb950 !important; background-color: rgba(63, 185, 80, 0.08); }
+.dark .custom-block.tip     .custom-block-title { color: #3fb950; }
+.dark .custom-block.important { border-left-color: #a371f7 !important; background-color: rgba(163, 113, 247, 0.08); }
+.dark .custom-block.important .custom-block-title { color: #a371f7; }
+.dark .custom-block.warning   { border-left-color: #d29922 !important; background-color: rgba(210, 153, 34, 0.08); }
+.dark .custom-block.warning .custom-block-title { color: #d29922; }
+.dark .custom-block.caution   { border-left-color: #f85149 !important; background-color: rgba(248, 81, 73, 0.08); }
+.dark .custom-block.caution .custom-block-title { color: #f85149; }
+.dark .custom-block.info      { border-left-color: #58a6ff !important; background-color: rgba(88, 166, 255, 0.08); }
+.dark .custom-block.info    .custom-block-title { color: #58a6ff; }
+.dark .custom-block.danger    { border-left-color: #f85149 !important; background-color: rgba(248, 81, 73, 0.08); }
+.dark .custom-block.danger  .custom-block-title { color: #f85149; }
+
+/* ── 본문 content 영역 확장 (포스트 페이지) ── */
+/* 기본 VitePress는 .VPDoc.has-aside .content가 688px로 고정 — 이를 풀어 좌/우 사이드바 사이를 최대한 사용 */
+.cblogs-post-wrapper .VPDoc.has-aside .container,
+.cblogs-post-wrapper .VPDoc .container {
+  max-width: none !important;
+}
+.cblogs-post-wrapper .VPDoc.has-aside .content,
+.cblogs-post-wrapper .VPDoc.has-aside .content-container,
+.cblogs-post-wrapper .VPDoc .content {
+  max-width: none !important;
+}
+.cblogs-post-wrapper .VPDoc {
+  padding: 32px 32px 96px !important;
+}
+
+/* 큰 화면에서는 본문에 좌우 여백 추가로 가독성 확보 */
+@media (min-width: 1440px) {
+  .cblogs-post-wrapper .VPDoc {
+    padding-left: 48px !important;
+    padding-right: 48px !important;
+  }
+}
 
 /* ── 반응형 ── */
 @media (max-width: 768px) {
   :root { --vp-sidebar-width: 0px; }
+  .cblogs-post-wrapper .VPDoc {
+    padding: 24px 16px 64px !important;
+  }
 }

@@ -1,0 +1,5 @@
+# robots.txt: cblogs 크롤링 정책 | 생성일: 2026-04-16
+User-agent: *
+Allow: /
+
+Sitemap: https://YOUR_USERNAME.github.io/sitemap.xml

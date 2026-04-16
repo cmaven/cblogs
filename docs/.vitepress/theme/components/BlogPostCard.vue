@@ -17,8 +17,8 @@ defineProps({
 <template>
   <a :href="link" class="post-card">
     <div class="card-meta">
-      <span class="card-date">{{ date }}</span>
       <span class="card-category">{{ categoryLabel }} &gt; {{ subcategoryLabel }}</span>
+      <span class="card-date">{{ date }}</span>
     </div>
     <h3 class="card-title">{{ title }}</h3>
     <p v-if="excerpt" class="card-excerpt">{{ excerpt }}</p>

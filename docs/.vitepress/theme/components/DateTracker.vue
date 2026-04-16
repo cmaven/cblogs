@@ -42,32 +42,32 @@ onUnmounted(() => {
 
 <style scoped>
 .date-tracker {
-  padding: 0.75rem;
+  padding: 0.4rem 0.6rem;
   margin: 0.5rem;
   background: var(--vp-c-bg-soft);
   border-radius: 8px;
 }
 .tracker-title {
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--vp-c-text-2);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.2rem;
 }
 .tracker-content {
   text-align: center;
 }
 .tracker-date {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--vp-c-text-1);
 }
 .tracker-time {
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--vp-c-brand-1);
   font-family: var(--vp-font-family-mono);
-  margin-top: 0.2rem;
+  margin-top: 0.05rem;
 }
 </style>

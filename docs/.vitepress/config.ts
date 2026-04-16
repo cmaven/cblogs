@@ -15,13 +15,21 @@ const postsRoot = path.join(docsRoot, 'posts')
 const categoryLabels: Record<string, string> = {
   tech: '기술',
   life: '라이프',
+  dev: '개발일지',
+  linux: '리눅스',
 }
 
 const subcategoryLabels: Record<string, string> = {
   frontend: '프론트엔드',
   backend: '백엔드',
+  ai: 'AI/ML',
+  devops: 'DevOps',
   productivity: '생산성',
   review: '리뷰',
+  travel: '여행',
+  troubleshooting: '트러블슈팅',
+  tooling: '도구',
+  server: '서버',
 }
 
 interface BlogPost {
@@ -77,9 +85,17 @@ function scanBlogPosts(): BlogPost[] {
           const content = fs.readFileSync(filePath, 'utf-8')
           const { data } = matter(content)
           const slug = file.replace('.md', '')
+          // YAML이 Date 객체로 파싱할 수 있으므로 ISO 문자열로 정규화 후 YYYY-MM-DD 추출
+          let dateStr = '2026-01-01'
+          if (data.date) {
+            const parsed = new Date(data.date)
+            dateStr = isNaN(parsed.getTime())
+              ? String(data.date)
+              : parsed.toISOString().split('T')[0]
+          }
           posts.push({
             title: data.title || slug,
-            date: data.date ? String(data.date).split('T')[0] : '2026-01-01',
+            date: dateStr,
             category: cat,
             categoryLabel: categoryLabels[cat] || cat,
             subcategory: sub,
@@ -132,14 +148,51 @@ function buildCategories(posts: BlogPost[]): BlogCategory[] {
 const blogPosts = scanBlogPosts()
 const blogCategories = buildCategories(blogPosts)
 
+// 배포 호스트네임 — User/Org Pages 배포 시 본인 GitHub 사용자명으로 치환
+// 예: 'https://cmaven.github.io'
+const SITE_HOSTNAME = 'https://YOUR_USERNAME.github.io'
+
+// Cloudflare Web Analytics 토큰 — dash.cloudflare.com에서 발급 후 치환
+// 비워두면 analytics 스크립트가 삽입되지 않음
+const CF_ANALYTICS_TOKEN = 'YOUR_CF_TOKEN'
+
 export default defineConfig({
   title: 'cblogs',
   description: '정보전달 블로그',
   lang: 'ko-KR',
 
+  // 사이트맵 자동 생성 (구글 인덱싱용)
+  sitemap: {
+    hostname: SITE_HOSTNAME,
+  },
+
   head: [
+    // 파비콘
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+
+    // 폰트
     ['link', { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/gh/sun-typeface/SUITE/fonts/variable/woff2/SUITE-Variable.css' }],
     ['link', { rel: 'stylesheet', href: 'https://cdn.jsdelivr.net/gh/wan2land/d2coding/d2coding-ligature-full.css' }],
+
+    // Open Graph 전역 기본값 (페이지별 og:title/description은 VitePress가 frontmatter에서 자동 생성)
+    ['meta', { property: 'og:type', content: 'article' }],
+    ['meta', { property: 'og:site_name', content: 'cblogs' }],
+    ['meta', { property: 'og:locale', content: 'ko_KR' }],
+
+    // Twitter Card
+    ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+
+    // Cloudflare Web Analytics (토큰이 설정된 경우에만 활성화)
+    ...(CF_ANALYTICS_TOKEN && CF_ANALYTICS_TOKEN !== 'YOUR_CF_TOKEN' ? [
+      ['script', {
+        defer: '',
+        src: 'https://static.cloudflareinsights.com/beacon.min.js',
+        'data-cf-beacon': JSON.stringify({ token: CF_ANALYTICS_TOKEN }),
+      }] as ['script', Record<string, string>],
+    ] : []),
+
+    // Google Search Console 인증 (HTML 태그 방식 사용 시 아래 주석 해제 후 토큰 입력)
+    // ['meta', { name: 'google-site-verification', content: 'YOUR_GSC_TOKEN' }],
   ],
 
   themeConfig: {

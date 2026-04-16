@@ -3,7 +3,7 @@
   생성일: 2026-04-13 | 수정일: 2026-04-13
 -->
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useData } from 'vitepress'
 import BlogSidebar from './BlogSidebar.vue'
 import BlogPostCard from './BlogPostCard.vue'
@@ -17,6 +17,18 @@ const POSTS_PER_PAGE = 6
 const selectedCategory = ref('')
 const selectedSubcategory = ref('')
 const currentPage = ref(1)
+
+// 포스트 페이지 사이드바에서 전달된 쿼리 파라미터로 초기 필터 복원
+onMounted(() => {
+  if (typeof window === 'undefined') return
+  const params = new URLSearchParams(window.location.search)
+  const cat = params.get('cat') || ''
+  const sub = params.get('sub') || ''
+  if (cat || sub) {
+    selectedCategory.value = cat
+    selectedSubcategory.value = sub
+  }
+})
 
 const filteredPosts = computed(() => {
   let posts = allPosts.value
@@ -118,8 +130,18 @@ function onPageChange(page) {
   padding: 2rem;
 }
 .blog-container {
-  max-width: 900px;
-  margin: 0 auto;
+  max-width: none;
+  margin: 0;
+  padding-right: 2rem;
+}
+/* 대형 화면에서 좌우 여백 추가로 가독성 확보 */
+@media (min-width: 1440px) {
+  .blog-main {
+    padding: 2rem 3rem;
+  }
+  .blog-container {
+    padding-right: 0;
+  }
 }
 .blog-header {
   margin-bottom: 2rem;
