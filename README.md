@@ -1,4 +1,4 @@
-<!-- README.md: cblogs VitePress 기반 정보전달 블로그 플랫폼 | 생성일: 2026-04-09 | 수정일: 2026-04-16 -->
+<!-- README.md: cblogs VitePress 기반 정보전달 블로그 플랫폼 | 생성일: 2026-04-09 | 수정일: 2026-05-07 -->
 
 # cblogs
 
@@ -518,6 +518,102 @@ EOF
 ---
 
 ## GitHub Pages 배포
+
+### Jekyll vs VitePress 빌드 차이
+
+GitHub Pages는 **Jekyll**을 네이티브로 지원하므로, Jekyll 프로젝트는 저장소에 push만 하면 GitHub이 자동으로 빌드·서비스합니다.
+**VitePress는 Jekyll이 아니므로** GitHub이 직접 빌드해주지 않습니다. 정적 산출물을 만들어 Pages에 업로드하는 과정을 직접 구성해야 합니다.
+
+| 항목 | Jekyll (기본 지원) | VitePress (직접 구성) |
+|------|--------------------|------------------------|
+| 빌드 주체 | GitHub 내부 빌더 | GitHub Actions 워크플로 |
+| 빌드 명령 | (자동) | `npm ci` → `npm run docs:build` |
+| 산출물 경로 | `_site/` (자동) | `docs/.vitepress/dist` (artifact 업로드) |
+| Pages Source | "Deploy from a branch" | "GitHub Actions" |
+| 설정 파일 | `_config.yml` | `.github/workflows/deploy.yml` |
+
+cblogs 저장소에는 `.github/workflows/deploy.yml`이 이미 포함되어 있어, 아래 절차대로 Pages Source만 "GitHub Actions"로 설정하면 main push 시마다 자동 배포됩니다.
+
+### Step-by-Step 배포 가이드 (User/Org Pages)
+
+`<username>.github.io` 형태로 cblogs를 서비스하려면 아래 순서를 따릅니다.
+
+#### ① GitHub username/Organization 결정
+
+- 새 계정·organization을 만들거나 기존 계정의 username을 사용
+- **GitHub username 규칙**
+  - 영문·숫자·하이픈(`-`)만 허용
+  - 언더스코어(`_`) **사용 불가**
+  - 하이픈으로 시작/끝나지 않으며, 연속 하이픈도 불가
+
+#### ② User/Org Pages 저장소 생성
+
+- 저장소명은 정확히 `<username>.github.io` (대소문자 포함 username과 일치)
+- **Public** 으로 생성 (Free 플랜은 Private 저장소의 Pages 기능에 제한이 있음)
+- 초기화 시 README/`.gitignore` 추가하지 않음 (push 충돌 방지)
+
+#### ③ cblogs 코드를 새 저장소로 push
+
+```bash
+# 새 원격 저장소 등록
+git remote add origin git@github.com:<username>/<username>.github.io.git
+
+# main 브랜치 보장
+git branch -M main
+
+# 최초 push (upstream 설정 포함)
+git push -u origin main
+```
+
+> [!TIP]
+> 기존 `origin`이 다른 저장소를 가리키면 `git remote set-url origin <new-url>` 로 교체합니다.
+
+#### ④ Pages 배포 소스 설정
+
+저장소 페이지 → **Settings** → **Pages**:
+
+- **Source**: `GitHub Actions` 선택 (`Deploy from a branch` 아님)
+- 별도의 build/branch 지정 불필요 — 워크플로가 artifact를 직접 업로드함
+
+#### ⑤ 사이트 메타데이터 갱신
+
+`docs/.vitepress/config.ts`에서 sitemap·OG 태그가 사용할 호스트네임을 본인 도메인으로 변경:
+
+```typescript
+const SITE_HOSTNAME = 'https://<username>.github.io'
+```
+
+이 값은 `sitemap.xml`의 절대 URL 생성에 쓰이므로, 정확하지 않으면 검색엔진 색인이 깨질 수 있습니다.
+
+#### ⑥ Base URL 확인
+
+| 배포 형태 | URL 패턴 | `base` 설정 |
+|-----------|----------|-------------|
+| User/Org Pages | `https://<username>.github.io/` | `'/'` (기본값, 생략 가능) |
+| Project Pages | `https://<username>.github.io/<repo>/` | `'/<repo>/'` 명시 필요 |
+
+`<username>.github.io` 저장소는 User/Org Pages이므로 `base` 수정 없이 그대로 사용합니다.
+
+#### ⑦ 첫 배포 트리거 및 검증
+
+```bash
+# 메타데이터 변경 커밋
+git add docs/.vitepress/config.ts
+git commit -m "chore: GitHub Pages 호스트네임 설정"
+git push
+```
+
+- 저장소 → **Actions** 탭에서 `Deploy VitePress site to Pages` 워크플로 실행 확인
+- `build` job → `deploy` job 모두 ✅ 표시되면 성공
+- `https://<username>.github.io` 접속 → 사이트 로딩 확인
+- HTTPS 인증서 발급·DNS 전파에 수 분이 걸릴 수 있음
+
+#### ⑧ (선택) Custom Domain 적용
+
+자체 도메인을 쓰려면 아래 [Custom Domain + HTTPS](#custom-domain--https) 절을 참조해 `docs/public/CNAME`과 DNS를 설정합니다.
+
+> [!IMPORTANT]
+> Pages Source를 `Deploy from a branch`로 둔 채 push하면 빌드 산출물(`dist`)이 없어 404가 납니다. 반드시 ④ 단계에서 `GitHub Actions`로 변경하세요.
 
 ### 워크플로 예제
 
