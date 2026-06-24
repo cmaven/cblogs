@@ -12,6 +12,7 @@ import Badge from './components/Badge.vue'
 import Button from './components/Button.vue'
 import Callout from './components/Callout.vue'
 import Details from './components/Details.vue'
+import Mermaid from './components/Mermaid.vue'
 
 export default {
   extends: DefaultTheme,
@@ -22,5 +23,6 @@ export default {
     app.component('Callout', Callout)
     app.component('Hint', Callout)
     app.component('Details', Details)
+    app.component('Mermaid', Mermaid)
   }
 } satisfies Theme

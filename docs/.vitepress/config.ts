@@ -220,6 +220,22 @@ export default defineConfig({
 
   markdown: {
     lineNumbers: false,
+    config: (md) => {
+      // ```mermaid 코드블록을 <Mermaid> 컴포넌트로 변환 (cdocs와 동일)
+      const fence = md.renderer.rules.fence!
+      md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+        const token = tokens[idx]
+        if (token.info.trim() === 'mermaid') {
+          const chart = token.content
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+          return `<Mermaid chart="${chart}" />\n`
+        }
+        return fence(tokens, idx, options, env, self)
+      }
+    },
   },
 
   vite: {

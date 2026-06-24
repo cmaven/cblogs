@@ -9,6 +9,7 @@
     "docs:preview": "vitepress preview docs --port 3031"
   },
   "dependencies": {
+    "mermaid": "^11.15.0",
     "vue": "^3.5.13"
   },
   "devDependencies": {

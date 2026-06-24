@@ -217,3 +217,28 @@ pre, code, kbd, samp { font-family: var(--vp-font-family-mono) !important; }
     padding: 60px 16px 64px !important;
   }
 }
+
+/* ── Mermaid 다이어그램 (cdocs에서 이식) ── */
+.mermaid-wrapper svg {
+  max-width: 100%;
+  height: auto;
+}
+/*
+ * Mermaid <foreignObject> HTML 라벨은 .vp-doc의 줄간격/단락 마진을 상속받아
+ * 측정값(body 직속 hidden div: line-height: normal)과 어긋나 다중 줄 라벨의
+ * 마지막 줄이 잘린다. 모든 자손을 리셋해 measurement 시점과 metric을 일치시킴.
+ */
+.mermaid-wrapper svg foreignObject,
+.mermaid-wrapper svg foreignObject * {
+  line-height: normal !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+/* foreignObject 클립으로 인한 마지막 줄 잘림 방지 */
+.mermaid-wrapper svg foreignObject {
+  overflow: visible !important;
+}
+/* 한글 폰트 ascender>descender 보정: 라벨을 0.08em 아래로 밀어 시각적 중앙정렬 */
+.mermaid-wrapper svg foreignObject > div {
+  transform: translateY(0.08em) !important;
+}
