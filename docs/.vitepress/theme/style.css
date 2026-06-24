@@ -212,7 +212,8 @@ pre, code, kbd, samp { font-family: var(--vp-font-family-mono) !important; }
 /* ── 반응형 ── */
 @media (max-width: 768px) {
   :root { --vp-sidebar-width: 0px; }
+  /* 상단 패딩을 키워 좌상단 고정 햄버거 버튼(40px)이 제목을 가리지 않도록 함 */
   .cblogs-post-wrapper .VPDoc {
-    padding: 24px 16px 64px !important;
+    padding: 60px 16px 64px !important;
   }
 }

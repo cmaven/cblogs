@@ -14,6 +14,8 @@ const { isDark } = useData()
 const props = defineProps({
   selectedCategory: { type: String, default: '' },
   selectedSubcategory: { type: String, default: '' },
+  // 좁은 화면(≤768px)에서 드로어 열림 상태
+  open: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['select'])
@@ -33,7 +35,7 @@ function openSearch() {
 </script>
 
 <template>
-  <aside class="blog-sidebar">
+  <aside class="blog-sidebar" :class="{ 'is-open': open }">
     <div class="sidebar-inner">
       <!-- 블로그 제목 -->
       <div class="sidebar-header">
@@ -199,5 +201,20 @@ function openSearch() {
 .footer-icon:hover {
   color: var(--vp-c-brand-1);
   background: var(--vp-c-brand-soft);
+}
+
+/* ── 반응형: ≤768px에서 오프캔버스 드로어 ── */
+/* 데스크톱은 항상 표시(transform 없음). 좁은 화면에서만 숨기고 is-open으로 슬라이드 인.
+   .blog-sidebar에 transform이 걸리면 내부 position:fixed 푸터의 컨테이닝 블록이
+   .blog-sidebar가 되어 함께 이동한다. */
+@media (max-width: 768px) {
+  .blog-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 2px 0 14px rgba(0, 0, 0, 0.18);
+  }
+  .blog-sidebar.is-open {
+    transform: translateX(0);
+  }
 }
 </style>
